@@ -5,9 +5,19 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/faelic/crypto-market-repl/internal/api"
 )
 
-type REPL struct{}
+type REPL struct {
+	client api.Client
+}
+
+func NewREPL(client api.Client) REPL {
+	return REPL{
+		client: client,
+	}
+}
 
 var supportedCoins = map[string]bool{
 	"bitcoin":  true,
@@ -63,9 +73,12 @@ func (r REPL) handleInput(input string) {
 	case "/price":
 		r.handlePrice(args)
 		return
+	case "/list":
+		r.handleList()
+		return
 	default:
 		fmt.Printf("unknown command: %s\n", command)
-
+		return
 	}
 }
 
@@ -86,6 +99,22 @@ examples: /price bitcoin, /price ethereum, /price solana
 		fmt.Println("supported coins: bitcoin, ethereum, solana")
 		return
 	}
+	_ = r.client
 
-	fmt.Printf("fetching price for %s ...\n", coin)
+	price := r.client.GetPrice(coin)
+
+	if price < 1 {
+		fmt.Printf("%s price: $%.4f\n", coin, price)
+		return
+	}
+	fmt.Printf("%s price: $%.2f\n", coin, price)
+
+}
+
+func (r REPL) handleList() {
+	coins := r.client.ListCoins()
+
+	for _, coin := range coins {
+		fmt.Println(coin)
+	}
 }
