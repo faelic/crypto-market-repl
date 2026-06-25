@@ -118,7 +118,11 @@ examples: /price bitcoin, /price ethereum, /price solana
 }
 
 func (r REPL) handleList() {
-	coins := r.client.ListCoins()
+	coins, err := r.client.ListCoins()
+	if err != nil {
+		fmt.Println("failed to fetch coin list")
+		return
+	}
 
 	fmt.Println("supported coins market overview:")
 
@@ -160,7 +164,7 @@ examples: /market bitcoin, /market ethereum, /market solana
 
 	fmt.Printf("Name: %s\n", marketData.Name)
 	fmt.Printf("Current Price: $%.2f\n", marketData.CurrentPrice)
-	fmt.Printf("MarketCap: $%.2f\n", marketData.MarketCap)
-	fmt.Printf("MarketCapRank: %d\n", marketData.MarketCapRank)
+	fmt.Printf("Market Cap: $%.2f\n", marketData.MarketCap)
+	fmt.Printf("Market Cap Rank: %d\n", marketData.MarketCapRank)
 	fmt.Printf("24h Change %.2f%%\n", marketData.Change24h)
 }

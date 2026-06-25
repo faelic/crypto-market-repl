@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/faelic/crypto-market-repl/internal/model"
 )
@@ -52,12 +53,46 @@ func (c Client) GetPrice(coin string) (float64, error) {
 
 }
 
-func (c Client) ListCoins() []model.Coin {
-	return []model.Coin{
-		{Name: "Bitcoin", Symbol: "BTC", Price: 100000, Change24h: 4.25},
-		{Name: "Ethereum", Symbol: "ETH", Price: 5000, Change24h: -2.50},
-		{Name: "Solana", Symbol: "SOL", Price: 0.53, Change24h: 3.33},
+func (c Client) ListCoins() ([]model.Coin, error) {
+	var response []struct {
+		Name                    string  `json:"name"`
+		Symbol                  string  `json:"symbol"`
+		CurrentPrice            float64 `json:"current_price"`
+		PriceChangePercentage24 float64 `json:"price_change_percentage_24h"`
 	}
+	fullURL := fmt.Sprintf("%s/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana", c.baseURL)
+
+	req, err := http.NewRequest("GET", fullURL, nil)
+	if err != nil {
+		return []model.Coin{}, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return []model.Coin{}, err
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return []model.Coin{}, err
+	}
+
+	if len(response) == 0 {
+		return []model.Coin{}, fmt.Errorf("could not return any coin from api")
+	}
+
+	coins := make([]model.Coin, 0, len(response))
+
+	for _, item := range response {
+		coins = append(coins, model.Coin{
+			Name:      item.Name,
+			Symbol:    strings.ToUpper(item.Symbol),
+			Price:     item.CurrentPrice,
+			Change24h: item.PriceChangePercentage24,
+		})
+	}
+	return coins, nil
 }
 
 func (c Client) GetMarket(coin string) (model.MarketData, error) {
