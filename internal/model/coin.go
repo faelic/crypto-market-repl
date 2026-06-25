@@ -6,3 +6,11 @@ type Coin struct {
 	Price     float64
 	Change24h float64
 }
+
+type MarketData struct {
+	Name          string
+	CurrentPrice  float64
+	MarketCap     float64
+	MarketCapRank int
+	Change24h     float64
+}

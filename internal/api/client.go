@@ -59,3 +59,45 @@ func (c Client) ListCoins() []model.Coin {
 		{Name: "Solana", Symbol: "SOL", Price: 0.53, Change24h: 3.33},
 	}
 }
+
+func (c Client) GetMarket(coin string) (model.MarketData, error) {
+	var response []struct {
+		Name                    string  `json:"name"`
+		CurrentPrice            float64 `json:"current_price"`
+		MarketCap               float64 `json:"market_cap"`
+		MarketCapRank           int     `json:"market_cap_rank"`
+		PriceChangePercentage24 float64 `json:"price_change_percentage_24h"`
+	}
+
+	fullURL := fmt.Sprintf("%s/coins/markets?vs_currency=usd&ids=%s", c.baseURL, coin)
+
+	req, err := http.NewRequest("GET", fullURL, nil)
+	if err != nil {
+		return model.MarketData{}, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return model.MarketData{}, err
+	}
+	defer resp.Body.Close()
+
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return model.MarketData{}, err
+	}
+
+	if len(response) == 0 {
+		return model.MarketData{}, fmt.Errorf("no market data found for %s", coin)
+	}
+
+	item := response[0]
+
+	return model.MarketData{
+		Name:          item.Name,
+		CurrentPrice:  item.CurrentPrice,
+		MarketCap:     item.MarketCap,
+		MarketCapRank: item.MarketCapRank,
+		Change24h:     item.PriceChangePercentage24,
+	}, nil
+}

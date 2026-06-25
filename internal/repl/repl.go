@@ -76,6 +76,8 @@ func (r REPL) handleInput(input string) {
 	case "/list":
 		r.handleList()
 		return
+	case "/market":
+		r.handleMarket(args)
 	default:
 		fmt.Printf("unknown command: %s\n", command)
 		return
@@ -129,4 +131,36 @@ func (r REPL) handleList() {
 		fmt.Printf("%s (%s): $%.2f | 24h: %.2f%%\n", coin.Name, coin.Symbol, coin.Price, coin.Change24h)
 
 	}
+}
+
+func (r REPL) handleMarket(args []string) {
+	message := `usage: /market <coin>
+examples: /market bitcoin, /market ethereum, /market solana
+`
+
+	if len(args) != 1 {
+		fmt.Println(message)
+		return
+	}
+
+	coin := strings.ToLower(args[0])
+
+	_, ok := supportedCoins[coin]
+	if !ok {
+		fmt.Printf("unsupported coin: %s\n", coin)
+		fmt.Println("supported coins: bitcoin, ethereum, solana")
+		return
+	}
+
+	marketData, err := r.client.GetMarket(coin)
+	if err != nil {
+		fmt.Printf("could not get market data of %s", coin)
+		return
+	}
+
+	fmt.Printf("Name: %s\n", marketData.Name)
+	fmt.Printf("Current Price: $%.2f\n", marketData.CurrentPrice)
+	fmt.Printf("MarketCap: $%.2f\n", marketData.MarketCap)
+	fmt.Printf("MarketCapRank: %d\n", marketData.MarketCapRank)
+	fmt.Printf("24h Change %.2f%%\n", marketData.Change24h)
 }
