@@ -101,7 +101,11 @@ examples: /price bitcoin, /price ethereum, /price solana
 	}
 	_ = r.client
 
-	price := r.client.GetPrice(coin)
+	price, err := r.client.GetPrice(coin)
+	if err != nil {
+		fmt.Println("failed to fetch price")
+		return
+	}
 
 	if price < 1 {
 		fmt.Printf("%s price: $%.4f\n", coin, price)
@@ -114,7 +118,15 @@ examples: /price bitcoin, /price ethereum, /price solana
 func (r REPL) handleList() {
 	coins := r.client.ListCoins()
 
+	fmt.Println("supported coins market overview:")
+
 	for _, coin := range coins {
-		fmt.Println(coin)
+		if coin.Price < 1 {
+			fmt.Printf("%s (%s): $%.4f | 24h: %.2f%%\n", coin.Name, coin.Symbol, coin.Price, coin.Change24h)
+			continue
+		}
+
+		fmt.Printf("%s (%s): $%.2f | 24h: %.2f%%\n", coin.Name, coin.Symbol, coin.Price, coin.Change24h)
+
 	}
 }
