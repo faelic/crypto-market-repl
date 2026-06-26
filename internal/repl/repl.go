@@ -55,6 +55,14 @@ func isSupportedCoin(coin string) bool {
 	return false
 }
 
+func formatPrice(price float64) string {
+	if price < 1 {
+		return fmt.Sprintf("$%.4f", price)
+	}
+
+	return fmt.Sprintf("$%.2f", price)
+}
+
 func (r REPL) handleInput(input string) {
 	command, args := parseInput(input)
 
@@ -111,12 +119,7 @@ examples: /price bitcoin, /price ethereum, /price solana
 		return
 	}
 
-	if price < 1 {
-		fmt.Printf("%s price: $%.4f\n", coin, price)
-		return
-	}
-	fmt.Printf("%s price: $%.2f\n", coin, price)
-
+	fmt.Printf("%s price: %s\n", coin, formatPrice(price))
 }
 
 func (r REPL) handleList() {
@@ -129,13 +132,7 @@ func (r REPL) handleList() {
 	fmt.Println("market overview:")
 
 	for _, coin := range coins {
-		if coin.Price < 1 {
-			fmt.Printf("%s (%s): $%.4f | 24h: %.2f%%\n", coin.Name, coin.Symbol, coin.Price, coin.Change24h)
-			continue
-		}
-
-		fmt.Printf("%s (%s): $%.2f | 24h: %.2f%%\n", coin.Name, coin.Symbol, coin.Price, coin.Change24h)
-
+		fmt.Printf("%s (%s): %s | 24h: %.2f%%\n", coin.Name, coin.Symbol, formatPrice(coin.Price), coin.Change24h)
 	}
 }
 

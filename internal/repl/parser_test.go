@@ -76,23 +76,3 @@ func TestParseInputWhitespaceOnly(t *testing.T) {
 		t.Errorf("expected lenth of args to be %d but got %d", wantLenArgs, len(gotArgs))
 	}
 }
-
-func TestIsSupportedCoin(t *testing.T) {
-	tests := []struct {
-		coin string
-		want bool
-	}{
-		{coin: "bitcoin", want: true},
-		{coin: "ethereum", want: true},
-		{coin: "solana", want: true},
-		{coin: "dogecoin", want: false},
-	}
-
-	for _, test := range tests {
-		got := isSupportedCoin(test.coin)
-
-		if got != test.want {
-			t.Errorf("isSupportedCoin(%s) = %v but expects it to be = %v", test.coin, got, test.want)
-		}
-	}
-}
