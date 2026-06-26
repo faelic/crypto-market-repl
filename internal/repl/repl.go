@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/faelic/crypto-market-repl/internal/api"
+	"github.com/faelic/crypto-market-repl/internal/model"
 )
 
 type REPL struct {
@@ -17,12 +18,6 @@ func NewREPL(client api.Client) REPL {
 	return REPL{
 		client: client,
 	}
-}
-
-var supportedCoins = map[string]bool{
-	"bitcoin":  true,
-	"ethereum": true,
-	"solana":   true,
 }
 
 func (r REPL) Start() {
@@ -51,12 +46,21 @@ func (r REPL) Start() {
 	}
 }
 
+func isSupportedCoin(coin string) bool {
+	for _, supportedCoin := range model.SupportedCoins {
+		if coin == supportedCoin {
+			return true
+		}
+	}
+	return false
+}
+
 func (r REPL) handleInput(input string) {
 	command, args := parseInput(input)
-	_ = args
 
 	switch command {
 	case "/help":
+		//still hardcoded would be changed
 		fmt.Println(`Available commands:
 	/help
 	/list
@@ -94,14 +98,12 @@ examples: /price bitcoin, /price ethereum, /price solana
 	}
 
 	coin := strings.ToLower(args[0])
-	_, ok := supportedCoins[coin]
 
-	if !ok {
+	if !isSupportedCoin(coin) {
 		fmt.Printf("unsupported coin: %s\n", coin)
 		fmt.Println("supported coins: bitcoin, ethereum, solana")
 		return
 	}
-	_ = r.client
 
 	price, err := r.client.GetPrice(coin)
 	if err != nil {
@@ -124,7 +126,7 @@ func (r REPL) handleList() {
 		return
 	}
 
-	fmt.Println("supported coins market overview:")
+	fmt.Println("market overview:")
 
 	for _, coin := range coins {
 		if coin.Price < 1 {
@@ -149,8 +151,7 @@ examples: /market bitcoin, /market ethereum, /market solana
 
 	coin := strings.ToLower(args[0])
 
-	_, ok := supportedCoins[coin]
-	if !ok {
+	if !isSupportedCoin(coin) {
 		fmt.Printf("unsupported coin: %s\n", coin)
 		fmt.Println("supported coins: bitcoin, ethereum, solana")
 		return
@@ -158,7 +159,7 @@ examples: /market bitcoin, /market ethereum, /market solana
 
 	marketData, err := r.client.GetMarket(coin)
 	if err != nil {
-		fmt.Printf("could not get market data of %s", coin)
+		fmt.Printf("could not get market data of %s\n", coin)
 		return
 	}
 
@@ -166,5 +167,5 @@ examples: /market bitcoin, /market ethereum, /market solana
 	fmt.Printf("Current Price: $%.2f\n", marketData.CurrentPrice)
 	fmt.Printf("Market Cap: $%.2f\n", marketData.MarketCap)
 	fmt.Printf("Market Cap Rank: %d\n", marketData.MarketCapRank)
-	fmt.Printf("24h Change %.2f%%\n", marketData.Change24h)
+	fmt.Printf("24h Change: %.2f%%\n", marketData.Change24h)
 }

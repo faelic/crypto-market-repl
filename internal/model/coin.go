@@ -14,3 +14,9 @@ type MarketData struct {
 	MarketCapRank int
 	Change24h     float64
 }
+
+var SupportedCoins = []string{
+	"bitcoin",
+	"ethereum",
+	"solana",
+}

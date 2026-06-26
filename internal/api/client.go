@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/faelic/crypto-market-repl/internal/model"
 )
 
 type Client struct {
-	baseURL string
+	baseURL    string
+	httpClient *http.Client
 }
 
 func NewClient() Client {
 	return Client{
 		baseURL: "https://api.coingecko.com/api/v3",
+		httpClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
 	}
 }
 
@@ -28,12 +33,15 @@ func (c Client) GetPrice(coin string) (float64, error) {
 		return 0, err
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return 0, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return 0, fmt.Errorf("api request failed with status: %s", resp.Status)
+	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return 0, err
@@ -60,19 +68,24 @@ func (c Client) ListCoins() ([]model.Coin, error) {
 		CurrentPrice            float64 `json:"current_price"`
 		PriceChangePercentage24 float64 `json:"price_change_percentage_24h"`
 	}
-	fullURL := fmt.Sprintf("%s/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana", c.baseURL)
+	ids := strings.Join(model.SupportedCoins, ",")
+	fullURL := fmt.Sprintf("%s/coins/markets?vs_currency=usd&ids=%s", c.baseURL, ids)
 
 	req, err := http.NewRequest("GET", fullURL, nil)
 	if err != nil {
 		return []model.Coin{}, err
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
+
 	if err != nil {
 		return []model.Coin{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return []model.Coin{}, fmt.Errorf("api request failed with status: %s", resp.Status)
+	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return []model.Coin{}, err
@@ -111,12 +124,16 @@ func (c Client) GetMarket(coin string) (model.MarketData, error) {
 		return model.MarketData{}, err
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
+
 	if err != nil {
 		return model.MarketData{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return model.MarketData{}, fmt.Errorf("api request failed with status: %s", resp.Status)
+	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return model.MarketData{}, err
