@@ -36,3 +36,21 @@ Available commands:
     ethereum
     solana
 
+> /list
+market overview:
+Bitcoin (BTC): $59065.00 | 24h: -3.02%
+Ethereum (ETH): $1559.43 | 24h: -4.99%
+Solana (SOL): $66.04 | 24h: -3.86%
+
+> /price bitcoin
+bitcoin price: $61079.00
+
+> /market solana
+Name: Solana
+Current Price: $65.10
+Market Cap: $37685685518.00
+Market Cap Rank: 7
+24h Change: -5.36%
+
+> /exit
+see you later
